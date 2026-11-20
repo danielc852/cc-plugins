@@ -1,0 +1,14 @@
+{
+  "name": "cc-plugins",
+  "owner": { "name": "Master Concept", "url": "https://masterconcept.ai" },
+  "metadata": {
+    "description": "Plugins for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "pad",
+      "source": "./pad",
+      "description": "A side pane that shows a short running summary of the task in hand, in your own language."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "pad",
+  "version": "0.1.0",
+  "description": "A side pane that shows a short running summary of the task in hand, in your own language: what was clarified, the plan and its progress, with the latest question or event at the bottom. It switches on when skill-creator starts, or with /pad for any other task.",
+  "author": { "name": "Master Concept", "url": "https://masterconcept.ai" },
+  "types": "./types/index.d.ts"
+}
