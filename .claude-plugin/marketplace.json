@@ -13,7 +13,7 @@
     {
       "name": "pstack-herdr",
       "source": "./pstack-herdr",
-      "description": "Lets pstack's review panels use agents from other companies (Codex for GPT, Antigravity for Gemini, Grok) by starting them in Herdr tabs."
+      "description": "Lets pstack's review panels run GPT seats in Codex, by starting Codex in Herdr tabs instead of running every seat as a Claude subagent."
     }
   ]
 }

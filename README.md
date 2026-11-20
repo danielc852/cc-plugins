@@ -5,7 +5,7 @@ Plugins for Claude Code.
 | Plugin | What it does |
 | --- | --- |
 | [pad](pad/README.md) | A side pane that shows a short running summary of the task in hand, in your own language. |
-| [pstack-herdr](pstack-herdr/README.md) | Lets [pstack](https://github.com/cursor/plugins/tree/main/pstack)'s review panels use agents from other companies (Codex for GPT, Antigravity for Gemini, Grok) by starting them in Herdr tabs. Needs pstack, Herdr and at least one of those agents. |
+| [pstack-herdr](pstack-herdr/README.md) | Lets [pstack](https://github.com/cursor/plugins/tree/main/pstack)'s review panels run GPT seats in Codex, by starting Codex in Herdr tabs instead of running every seat as a Claude subagent. Needs pstack, Herdr and Codex. |
 
 ## Install
 

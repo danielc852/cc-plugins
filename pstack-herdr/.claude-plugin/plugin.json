@@ -1,6 +1,9 @@
 {
   "name": "pstack-herdr",
-  "version": "0.6.0",
-  "description": "Lets pstack use agents from other companies through Herdr: Codex (GPT), Antigravity (Gemini) and Grok. When a pstack seat names a non-Claude model, it is started as its own agent in a Herdr tab instead of quietly running on Claude. Run /pstack-herdr first: it checks which agents and models this machine has, runs pstack's own setup, then spreads the review seats across the companies it found. Needs the pstack plugin and Herdr.",
-  "author": { "name": "Master Concept", "url": "https://masterconcept.ai" }
+  "version": "0.7.0",
+  "description": "pstack normally runs every seat as a Claude subagent. With this plugin, a seat that names a GPT model runs OpenAI's own agent, Codex, in a Herdr tab instead. Write the model names in pstack's model list. Needs the pstack plugin and Herdr.",
+  "author": {
+    "name": "Master Concept",
+    "url": "https://masterconcept.ai"
+  }
 }

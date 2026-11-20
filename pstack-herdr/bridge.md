@@ -1,38 +1,45 @@
 # pstack-herdr bridge: seats on other companies' agents
 
+pstack normally runs every seat as a Claude subagent. With this plugin, a seat that names a GPT model runs OpenAI's own agent, Codex, in a Herdr tab instead.
+
 pstack's Claude Code adapter (`docs/harness/claude-code.md` in the pstack plugin) says that a non-Claude model name is dropped and the seat runs on the session model. This file replaces that one rule. Everything else in the adapter still holds.
 
 A "seat" is one subagent a pstack skill asks for: an arena runner, the arena judge, an interrogate reviewer, the final check in show-me-your-work, or a second opinion.
 
 ## Agents
 
-Two files describe the agents. Read both.
+The user writes model names directly in `~/.claude/rules/pstack-models.md`. The start of the name says which agent runs it:
 
-- `agents.tsv`, next to this file, lists the agents the plugin knows, one row each: the prefix its model names share, the program, the arguments before the task (`{model}` is the seat's model name; split them on spaces), and the vendor, the company that makes its models. Today these are Codex (`gpt-`, OpenAI), Antigravity (`gemini-`, Google) and Grok (`grok-`, xAI).
-- The state file that the session-start note names (normally `~/.claude/pstack-herdr/state.tsv`) is what `/pstack-herdr` found on this machine: each program's state, its default model (the strongest it found, for a seat that only asks for another vendor), the models it offers, and its vendor. Only `ready` means usable.
+| Name starts with | Company | Program | Arguments before the task |
+| --- | --- | --- | --- |
+| `gpt-` | OpenAI | `codex` | `--no-daemon -m <model>` |
+
+Claude's company is Anthropic. A name that is neither a Claude model nor in the table, such as a `gemini-` name left from an earlier version of this plugin, follows the adapter: run that seat on the session model, say so, and tell the user to change the name.
 
 ## Which seats can go to a tab
 
-Other-company models belong only in `arena runners`, `arena cross-judge pool` and `interrogate reviewers`, plus the two seats that name no model: the final check in show-me-your-work and a second opinion. A non-Claude name in any other role follows the adapter: run that seat on the session model, say so, and tell the user to run `/pstack-herdr`, which puts that role back on Claude.
+Other-company models belong only in `arena runners`, `arena cross-judge pool` and `interrogate reviewers`, plus the two seats that name no model: the final check in show-me-your-work and a second opinion. A non-Claude name in any other role follows the adapter: run that seat on the session model, say so, and tell the user to put a Claude model in that role.
 
 A seat from those roles goes to a tab when all three are true:
 
-1. The seat's model name starts with a prefix whose program is `ready` in the state file, and the name is in that row's models. A seat that names no model takes the `default` column of the first `ready` row.
+1. The seat's model name starts with a prefix in the table. A seat that names no model takes the first name in `arena cross-judge pool` that starts with one.
 2. `$HC_TERMINAL_ID` is set, so this session runs inside Herdr.
-3. `command -v <program>` still finds the program.
+3. `command -v <program>` finds the program.
+
+Whether the model name is right and the program is logged in shows only once the tab starts. A seat that fails there is handled as in "Check it began".
 
 ## When a seat cannot go to a tab
 
-- **A seat that must be from another vendor never runs on the session model.** These are the arena judge, the show-me-your-work final check and a second opinion. For the judge, try the next entry in `arena cross-judge pool` from another vendor (by the state file's `vendor` column; Claude is `anthropic`) that passes the three checks, in list order; if none does, skip the judge as arena says. For the final check or a second opinion, skip it. Either way, say which seat was skipped and why, and that no cross-vendor review ran. In show-me-your-work's Attention section, write `reviewed by: nobody (<why>)`.
+- **A seat that must be from another company never runs on the session model.** These are the arena judge, the show-me-your-work final check and a second opinion. For any of them, try the next name in `arena cross-judge pool` from another company that passes the three checks, in list order. If none does, skip the seat (arena says how to go on without a judge). Say which seat was skipped and why, and that no cross-company review ran. In show-me-your-work's Attention section, write `reviewed by: nobody (<why>)`.
 - **Any other seat**, such as an arena runner or an interrogate reviewer, follows the adapter: run it on the session model and say which seat fell back and why.
-- When the cause is a missing or stale state file, or a model name it does not list, tell the user to run `/pstack-herdr`.
+- When the program is not installed, or its tab shows a wrong model name or a login prompt, tell the user what to fix: install or log in to the program, or correct the name in `~/.claude/rules/pstack-models.md`.
 - Never pass a non-Claude name to the `Agent` tool.
 
 Seats with Claude model names are unchanged. They still go through the `Agent` tool.
 
 ## Do not ask which agent
 
-The user chose each seat's agent when they set up the model list, so start the seats without asking which agent to use, such as "Claude, Codex, Gemini or Grok?". These tabs are not task tabs under a project's Herdr setup or the herdr-setup skill: its rule to ask before launching does not apply to them. Its permission rules still do.
+The user chose each seat's agent when they wrote the model list, so start the seats without asking which agent to use, such as "Claude or Codex?". These tabs are not task tabs under a project's Herdr setup or the herdr-setup skill: its rule to ask before launching does not apply to them. Its permission rules still do.
 
 ## Start the seat
 
@@ -52,7 +59,7 @@ The user chose each seat's agent when they set up the model list, so start the s
    ```
 
    A seat that only reads and scores, such as the judge or the final check, gets an empty folder of its own. Its brief names the paths it must read, and `report.md` is the only file it writes.
-3. **Open the tab.** Your space is `labels."herdr.space"` in `hc get $HC_TERMINAL_ID`. If it has none, leave out `--space` (Herdr uses the selected space) and say so. Build `--argv` from the agent's row: the program's full path from `command -v <program>`, so the tab finds it even when Herdr's environment does not, then its arguments with `{model}` replaced, each as its own string.
+3. **Open the tab.** Your space is `labels."herdr.space"` in `hc get $HC_TERMINAL_ID`. If it has none, leave out `--space` (Herdr uses the selected space) and say so. Build `--argv` from the agent's line in the table: the program's full path from `command -v <program>`, so the tab finds it even when Herdr's environment does not, then its arguments with `<model>` replaced by the seat's model name, each as its own string.
 
    ```sh
    herdr-app do tab.new --name "<run> <seat> (<program>)" --folder <seat folder> \
@@ -91,9 +98,10 @@ A non-Claude name carries no effort level. The agent uses the effort set in its 
 
 ## setup-pstack
 
-`/pstack-herdr` runs pstack's `setup-pstack` skill. While it runs:
+While pstack's `setup-pstack` skill runs:
 
-- In its detect step, a name listed for a `ready` agent in the state file counts as available, but only for `arena runners`, `arena cross-judge pool` and `interrogate reviewers`. Offer only Claude models and the aliases for every other role.
-- In its validate step, any non-Claude name in those three roles passes, even one the state file does not list. `/pstack-herdr` deals with it in its next step, so validation never stops on it. A non-Claude name in any other role needs a choice: offer Claude models.
+- In its detect step, a name that starts with a prefix in the table counts as available when `command -v <program>` finds its program, but only for `arena runners`, `arena cross-judge pool` and `interrogate reviewers`. Offer only Claude models and the aliases for every other role.
+- In its validate step, any name with a prefix from the table passes in those three roles, so validation never stops on it. A non-Claude name in any other role needs a choice: offer Claude models.
 - Its budget step changes only Claude entries. A non-Claude name has no effort token: keep it as it is, such as `gpt-6.2-sol`.
 - A non-Claude name already in one of the three roles is the user's choice. Keep it in its role and its place in the list.
+- When it writes `~/.claude/rules/pstack-models.md` and any of the three roles holds a non-Claude name, add this comment line under its other comments if it is missing: `# Non-Claude names run as their own agent in a Herdr tab, through the pstack-herdr plugin.`
