@@ -44,16 +44,16 @@ trap 'rm -f "$tmp" "$out"' EXIT
 
 {
   printf '# Written by pstack-herdr setup on %s. Rerun /pstack-herdr to refresh.\n' "$(date '+%Y-%m-%d %H:%M')"
-  printf 'prefix\tprogram\tstate\tdefault\tmodels\n'
+  printf 'prefix\tprogram\tstate\tdefault\tmodels\tvendor\n'
 } >"$tmp" || fail "Cannot write in $state_dir."
 
 while IFS= read -r line || [[ -n "$line" ]]; do
   line=${line%$'\r'}
   # Split on single tabs, so an empty column stays empty instead of shifting the rest.
-  IFS=$'\x1f' read -r prefix program args default login models tested <<<"${line//$'\t'/$'\x1f'}"
+  IFS=$'\x1f' read -r prefix program args default login models tested vendor <<<"${line//$'\t'/$'\x1f'}"
   [[ -z "$prefix" || "$prefix" == \#* || "$prefix" == prefix ]] && continue
   found="" chosen=""
-  if [[ -z "$program" || -z "$login" || -z "$models" ]]; then
+  if [[ -z "$program" || -z "$login" || -z "$models" || -z "$vendor" ]]; then
     status="bad-row"
   elif ! command -v "$program" >/dev/null 2>&1; then
     status="not-installed"
@@ -76,13 +76,15 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       esac
     fi
   fi
-  # The default must be one of the models found; otherwise take the first one listed.
+  # The default is the first preferred model that was found; otherwise the first one listed.
   if [[ -n "$found" ]]; then
     chosen=${found%% *}
-    [[ " $found " == *" $default "* && -n "$default" ]] && chosen=$default
+    for want in $default; do
+      if [[ " $found " == *" $want "* ]]; then chosen=$want; break; fi
+    done
   fi
-  printf '%s\t%s\t%s\t%s\t%s\n' "$prefix" "$program" "$status" "$chosen" "$found" >>"$tmp" || fail "Cannot write in $state_dir."
-  printf '%-8s %-10s %-14s %-16s %s\n' "$prefix" "$program" "$status" "$chosen" "$found"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$prefix" "$program" "$status" "$chosen" "$found" "$vendor" >>"$tmp" || fail "Cannot write in $state_dir."
+  printf '%-8s %-10s %-8s %-14s %-20s %s\n' "$prefix" "$program" "$vendor" "$status" "$chosen" "$found"
 done <"$registry"
 
 mv -f "$tmp" "$state" 2>/dev/null || fail "Cannot save $state."

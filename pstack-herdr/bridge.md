@@ -8,8 +8,8 @@ A "seat" is one subagent a pstack skill asks for: an arena runner, the arena jud
 
 Two files describe the agents. Read both.
 
-- `agents.tsv`, next to this file, lists the agents the plugin knows, one row each: the prefix its model names share, the program, and the arguments before the task (`{model}` is the seat's model name; split them on spaces).
-- The state file that the session-start note names (normally `~/.claude/pstack-herdr/state.tsv`) is what `/pstack-herdr` found on this machine: each program's state, the default model it checked for a seat that only asks for another vendor, and the models it offers. Only `ready` means usable.
+- `agents.tsv`, next to this file, lists the agents the plugin knows, one row each: the prefix its model names share, the program, the arguments before the task (`{model}` is the seat's model name; split them on spaces), and the vendor, the company that makes its models. Today these are Codex (`gpt-`, OpenAI), Antigravity (`gemini-`, Google) and Grok (`grok-`, xAI).
+- The state file that the session-start note names (normally `~/.claude/pstack-herdr/state.tsv`) is what `/pstack-herdr` found on this machine: each program's state, its default model (the strongest it found, for a seat that only asks for another vendor), the models it offers, and its vendor. Only `ready` means usable.
 
 ## Which seats can go to a tab
 
@@ -23,7 +23,7 @@ A seat from those roles goes to a tab when all three are true:
 
 ## When a seat cannot go to a tab
 
-- **A seat that must be from another vendor never runs on the session model.** These are the arena judge, the show-me-your-work final check and a second opinion. For the judge, try the next entry in `arena cross-judge pool` from another vendor that passes the three checks, in list order; if none does, skip the judge as arena says. For the final check or a second opinion, skip it. Either way, say which seat was skipped and why, and that no cross-vendor review ran. In show-me-your-work's Attention section, write `reviewed by: nobody (<why>)`.
+- **A seat that must be from another vendor never runs on the session model.** These are the arena judge, the show-me-your-work final check and a second opinion. For the judge, try the next entry in `arena cross-judge pool` from another vendor (by the state file's `vendor` column; Claude is `anthropic`) that passes the three checks, in list order; if none does, skip the judge as arena says. For the final check or a second opinion, skip it. Either way, say which seat was skipped and why, and that no cross-vendor review ran. In show-me-your-work's Attention section, write `reviewed by: nobody (<why>)`.
 - **Any other seat**, such as an arena runner or an interrogate reviewer, follows the adapter: run it on the session model and say which seat fell back and why.
 - When the cause is a missing or stale state file, or a model name it does not list, tell the user to run `/pstack-herdr`.
 - Never pass a non-Claude name to the `Agent` tool.
@@ -32,7 +32,7 @@ Seats with Claude model names are unchanged. They still go through the `Agent` t
 
 ## Do not ask which agent
 
-The user chose each seat's agent when they set up the model list, so start the seats without asking "Claude or Codex?". These tabs are not task tabs under a project's Herdr setup or the herdr-setup skill: its rule to ask before launching does not apply to them. Its permission rules still do.
+The user chose each seat's agent when they set up the model list, so start the seats without asking which agent to use, such as "Claude, Codex, Gemini or Grok?". These tabs are not task tabs under a project's Herdr setup or the herdr-setup skill: its rule to ask before launching does not apply to them. Its permission rules still do.
 
 ## Start the seat
 

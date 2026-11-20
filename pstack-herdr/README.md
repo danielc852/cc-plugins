@@ -2,7 +2,15 @@
 
 Lets [pstack](https://github.com/cursor/plugins/tree/main/pstack) use agents from other companies in Claude Code, by starting them in Herdr tabs.
 
-pstack's review panels are designed to mix models from different companies: one arena runner, the arena judge, one interrogate reviewer and the final check before a handoff. In Claude Code the built-in sub-agent tool only runs Claude models, so pstack quietly runs those seats on Claude. With this plugin, a seat that names a GPT model opens a Herdr tab running Codex with that model, gets the same brief, and reports back to the main chat.
+pstack's review panels are designed to mix models from different companies: one arena runner, the arena judge, one interrogate reviewer and the final check before a handoff. In Claude Code the built-in sub-agent tool only runs Claude models, so pstack quietly runs those seats on Claude. With this plugin, a seat that names another company's model opens a Herdr tab running that company's agent with that model, gets the same brief, and reports back to the main chat.
+
+| Company | Agent program | Model names | Strongest model setup prefers |
+| --- | --- | --- | --- |
+| OpenAI | Codex (`codex`) | `gpt-…` | `gpt-6.2-astra` |
+| Google | Antigravity CLI (`agy`) | `gemini-…` | `gemini-4-neon-high`, then `gemini-4-carbon-high`, then `gemini-3.1-pro-high` |
+| xAI | Grok CLI (`grok`) | `grok-…` | `grok-4.7` |
+
+Setup checks which of these are installed and logged in, then spreads the review seats across as many companies as it can, next to Claude, using each company's strongest model on your machine. You need only one of them; any you lack are left out.
 
 pstack itself is not changed. Code writing, prose, swarm workers and verification stay on Claude. Only `arena runners`, `arena cross-judge pool` and `interrogate reviewers` take other-company models, plus the final check and second opinion, which name no model.
 
@@ -10,11 +18,15 @@ pstack itself is not changed. Code writing, prose, swarm workers and verificatio
 
 - Claude Code with the `pstack` plugin installed, as pstack's README says.
 - Herdr (the `hc` and `herdr-app` commands), with Claude Code started inside it. Outside Herdr the plugin stays silent.
-- Codex (`codex`), logged in with `codex login`, and `python3`, which reads Codex's model list. Codex must be on the `PATH` of the shells Herdr opens, not only in your current shell.
-- Codex must trust the project folder. Open the project in Codex once and trust it, or trust a parent folder. Otherwise each Codex tab stops on a trust prompt and waits for you.
-- At the end of its work, each Codex seat runs `hc send` to report back. Depending on your Codex sandbox and approval settings, Codex may ask you before running it. The tab then waits for you; Claude tells you which tab and never answers for you.
+- At least one of the agents above, logged in:
+  - Codex: `codex login`, and `python3`, which reads Codex's model list.
+  - Antigravity: start `agy` once and sign in. `agy models` should then list Gemini models.
+  - Grok: `grok login`. `grok models` should then say you are logged in.
+- Each agent must be on the `PATH` of the shells Herdr opens, not only in your current shell.
+- Each agent must trust the project folder. Open the project in it once and trust it, or trust a parent folder. Otherwise its tab stops on a trust prompt and waits for you.
+- At the end of its work, each seat runs `hc send` to report back. Depending on the agent's sandbox and approval settings, it may ask you before running it. The tab then waits for you; Claude tells you which tab and never answers for you.
 
-Tested with Claude Code 2.1.311, pstack 0.15.46, Codex CLI 0.170.0, hc 0.1.21 and herdr-app 0.1.16, on macOS.
+Tested end to end with Claude Code 2.1.311, pstack 0.15.46, Codex CLI 0.170.0, hc 0.1.21 and herdr-app 0.1.16, on macOS. The Antigravity (agy 1.5.9) and Grok (grok 1.0.89) rows pass setup's checks but have not yet run a seat end to end.
 
 ## Install
 
@@ -61,7 +73,7 @@ When an other-company seat cannot start, an arena runner or interrogate reviewer
 
 ## Add another company
 
-`agents.tsv` holds one row per agent program: the prefix its model names share, the program, its arguments, a preferred default model, a command that checks the login and a command that lists its models. Columns are separated by one tab, and arguments are split on spaces. Add a row and run setup. Only the `gpt-` row for Codex has been tested.
+`agents.tsv` holds one row per agent program: the prefix its model names share, the program, its arguments, the models to prefer (strongest first; the first one found is used), a command that checks the login, a command that lists its models, whether it has been tested, and the company that makes its models. Columns are separated by one tab, and arguments are split on spaces. Add a row and run setup. Only the `gpt-` row for Codex has run a seat end to end.
 
 ## Files
 

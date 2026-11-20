@@ -25,7 +25,7 @@ if [[ ! -r "$root/agents.tsv" ]]; then
 elif [[ ! -f "$state" ]]; then
   add "setup has never run on this machine"
 else
-  grep -q "^prefix	program	state	default	models" "$state" || add "setup ran with an older version of the plugin"
+  grep -q "^prefix	program	state	default	models	vendor" "$state" || add "setup ran with an older version of the plugin"
   while IFS= read -r line || [[ -n "$line" ]]; do
     line=${line%$'\r'}
     IFS=$'\x1f' read -r prefix program _ <<<"${line//$'\t'/$'\x1f'}"

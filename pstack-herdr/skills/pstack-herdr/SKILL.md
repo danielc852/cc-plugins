@@ -1,6 +1,6 @@
 ---
 name: pstack-herdr
-description: Set up pstack with agents from other companies in one go. Checks which agents and models this machine can run, runs pstack's own setup (/pstack:setup-pstack), then puts other-company models, such as Codex with a GPT model, into pstack's review seats. Required before the first use of pstack-herdr and again when an agent program is added or removed. Use for /pstack-herdr, "set up pstack-herdr", "set up pstack with Codex", "use Codex in pstack", "change the pstack GPT model" or "change the pstack budget".
+description: Set up pstack with agents from other companies in one go. Checks which agents and models this machine can run, runs pstack's own setup (/pstack:setup-pstack), then spreads pstack's review seats across the companies it found, using each one's strongest model: GPT through Codex, Gemini through Antigravity (agy) and Grok through the Grok CLI, next to Claude. Required before the first use of pstack-herdr and again when an agent program is added, logged in or removed. Use for /pstack-herdr, "set up pstack-herdr", "set up pstack with Codex, Gemini or Grok", "use Codex in pstack", "change the pstack GPT, Gemini or Grok model" or "change the pstack budget".
 ---
 
 # Set up pstack-herdr
@@ -21,15 +21,15 @@ bash ../../scripts/detect.sh
 
 Use the script's absolute path. If it exits 1, show its message and stop: the saved state was not changed. The Claude models are the `model` values that the `Agent` tool schema lists.
 
-Show the user one table: each agent program with its state, default and models, then the Claude models. For each state other than `ready`, say what to do, then suggest rerunning setup:
+Show the user one table: each agent program with its company, state, default and models, then the Claude models. For each state other than `ready`, say what to do, then suggest rerunning setup:
 
 | State | What to do |
 | --- | --- |
 | `not-installed` | Install the program. |
-| `not-logged-in` | Log in, such as `codex login`. |
+| `not-logged-in` | Log in: `codex login`, `grok login`, or start `agy` once and sign in. |
 | `timed-out` | The login or model check took over 15 seconds. Check the network and rerun. |
-| `models-failed` | The model list command failed. Run it by hand (for Codex, `codex debug models`) to see why. |
-| `no-models` | The program offers no model with this prefix. For Codex, start `codex` once and check the account. |
+| `models-failed` | The model list command failed. Run it by hand (`codex debug models`, `agy models` or `grok models`) to see why. |
+| `no-models` | The program offers no model with this prefix. Start the program once and check the account. |
 | `bad-row` | The row in `agents.tsv` is missing a column. Fix the row. |
 
 If `$HC_TERMINAL_ID` is not set, say that the seats only reach a tab in sessions started inside Herdr, then go on.
@@ -52,17 +52,25 @@ Only three roles take another vendor. Code, prose, swarm workers and verificatio
 
 If no agent is `ready` in step 1, skip to step 5. Leave any non-Claude name in the three roles and say that its seat runs on Claude, or is skipped for the judge, until setup finds its agent ready.
 
-Otherwise show the user the current value of each of the three roles and a proposal, then ask with `AskUserQuestion` whether to accept it or change a seat. Offer only models found in step 1. With Codex ready, the proposal is:
+Otherwise show the user the current value of each of the three roles and a proposal, then ask with `AskUserQuestion` whether to accept it or change a seat. Offer only models found in step 1.
+
+The proposal spreads each list across as many companies as it can, so the seats see the work differently. A company is a `vendor` in the state file; Claude is the company `anthropic`. Each company's model is its `default` from step 1, its strongest model on this machine.
 
 | Role | Proposal |
 | --- | --- |
-| `arena runners` | the list with `gpt-6.2-sol` in place of its `inherit-parent` or `gemini-*` entry |
-| `arena cross-judge pool` | Codex's `default` from step 1 first, then the list's Claude entries |
-| `interrogate reviewers` | the list with `gpt-6.2-sol` in place of its `inherit-parent` or `gemini-*` entry |
+| `arena runners` | as many entries as pstack's setup wrote: one Claude entry, then one model from each `ready` company in state-file order, until the list is full |
+| `arena cross-judge pool` | one model from each `ready` company in state-file order, then the list's Claude entries |
+| `interrogate reviewers` | the same as `arena runners` |
 
-Keep the effort pstack's setup gave each Claude entry. When a list already names a model of a `ready` agent, propose keeping it. When a proposed model is not in step 1's list, propose that agent's first listed model of the same name family instead, else its first listed model, and say so. A non-Claude name that step 1 did not find is stale, including those noted in step 2: mark it and propose a replacement.
+For example, with Codex, Antigravity and Grok ready and a three-entry list, the runners are `opus medium`, `gpt-6.2-astra`, `gemini-4-neon-high`, and the judge pool is `gpt-6.2-astra`, `gemini-4-neon-high`, `grok-4.7`, `opus medium`.
 
-The judge is never from the session's vendor, and pstack takes the first entry from another vendor, so the other-vendor name goes first in `arena cross-judge pool`.
+- Never put two models from the same company in one list, Claude included, unless there are more seats than companies. Then fill the remaining seats with the Claude entries pstack's setup wrote.
+- When there are more `ready` companies than seats, say which ones were left out, so the user can swap one in.
+- When a list already names a model of a `ready` company, propose keeping that one for its company instead of the `default`, in the same place in the list.
+- Keep the effort pstack's setup gave each Claude entry. An `inherit-parent` entry counts as Claude.
+- A non-Claude name that step 1 did not find is stale, including those noted in step 2: mark it and propose its company's `default` instead, or another company's if its company is not ready.
+
+The judge is never from the session's vendor, and pstack takes the first entry from another vendor, so the other-vendor names go first in `arena cross-judge pool`.
 
 The final check in show-me-your-work and a second opinion name no model. They use the `default` that step 1 found for the first `ready` agent.
 
