@@ -1,0 +1,7 @@
+# One row per agent program. Columns are separated by one tab. Write every column; leave args empty for none.
+# prefix: the start that its model names share. program: what runs in the Herdr tab.
+# args: arguments before the task, split on spaces; {model} is the seat's model name. default: preferred model for a seat that only asks for another vendor.
+# login: a command that exits 0 when the program is logged in. models: a command that prints the models it offers, one per line, best first.
+# tested: yes once a seat has run end to end with this row.
+prefix	program	args	default	login	models	tested
+gpt-	codex	--no-daemon -m {model}	gpt-6.2-astra	codex login status	codex debug models | python3 -c 'import json,sys; [print(m["slug"]) for m in sorted(json.load(sys.stdin)["models"], key=lambda m: m.get("priority", 0)) if m.get("visibility") == "list"]'	yes
