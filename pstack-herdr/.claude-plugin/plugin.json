@@ -1,0 +1,6 @@
+{
+  "name": "pstack-herdr",
+  "version": "0.5.0",
+  "description": "Lets pstack use agents from other companies through Herdr. When a pstack seat names a non-Claude model, such as a GPT model, it is started as its own agent in a Herdr tab instead of quietly running on Claude. Run /pstack-herdr first: it checks which agents and models this machine has, then runs pstack's own setup. Needs the pstack plugin and Herdr.",
+  "author": { "name": "Master Concept", "url": "https://masterconcept.ai" }
+}

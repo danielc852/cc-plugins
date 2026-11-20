@@ -9,6 +9,11 @@
       "name": "pad",
       "source": "./pad",
       "description": "A side pane that shows a short running summary of the task in hand, in your own language."
+    },
+    {
+      "name": "pstack-herdr",
+      "source": "./pstack-herdr",
+      "description": "Lets pstack's review panels use agents from other companies, such as Codex with a GPT model, by starting them in Herdr tabs."
     }
   ]
 }
